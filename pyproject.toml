@@ -19,6 +19,9 @@ classifiers = [
 readme = "README.md"
 requires-python = ">=3.10"
 license = "Apache-2.0"
+authors = [
+    { name = "abusuraihsakhri", email = "abusuraihsakhri@gmail.com" }
+]
 dependencies = [
     "numpy>=1.26",
     "huggingface-hub>=0.34,<2",
@@ -38,6 +41,10 @@ dev = ["pytest>=8", "ruff>=0.12", "build>=1"]
 laya-universal = "laya_universal.cli:main"
 
 [project.urls]
+Homepage = "https://abusuraihsakhri.github.io/laya-universal/"
+Documentation = "https://abusuraihsakhri.github.io/laya-universal/"
+Repository = "https://github.com/abusuraihsakhri/laya-universal"
+"Issue Tracker" = "https://github.com/abusuraihsakhri/laya-universal/issues"
 Upstream = "https://github.com/NandhaKishorM/laya"
 "MLX port" = "https://github.com/mizorewww/laya-mlx"
 
