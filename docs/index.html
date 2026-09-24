@@ -1,865 +1,634 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="en" data-theme="light">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Laya Universal — Cross-Platform Typed Decision Inference</title>
-  <meta name="description" content="High-speed typed decision inference runtime (7-15ms) for Laya models across Windows, Linux, and macOS. Zero PyTorch dependency.">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Documentation for laya-universal, a cross-platform Python inference runtime for Laya typed-decision checkpoints.">
+  <title>Laya Universal — Documentation</title>
   <style>
     :root {
-      --bg: #090d16;
-      --bg-surface: #101726;
-      --bg-card: #151f33;
-      --bg-code: #0b111e;
-      --border: #22314d;
-      --border-focus: #3b82f6;
-      --text: #f1f5f9;
-      --text-muted: #94a3b8;
-      --text-dim: #64748b;
-      --primary: #3b82f6;
-      --primary-hover: #2563eb;
-      --accent: #10b981;
-      --warning: #f59e0b;
-      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      --bg: #f7f8fb;
+      --surface: rgba(255, 255, 255, 0.9);
+      --surface-solid: #ffffff;
+      --text: #172033;
+      --muted: #647087;
+      --border: #dfe4ec;
+      --accent: #3f5bd8;
+      --accent-strong: #2f46b4;
+      --accent-soft: #eef1ff;
+      --code-bg: #111827;
+      --code-text: #e5e7eb;
+      --shadow: 0 14px 40px rgba(37, 51, 88, 0.08);
+      --radius: 18px;
+      --max: 1120px;
     }
 
-    [data-theme="light"] {
-      --bg: #f8fafc;
-      --bg-surface: #ffffff;
-      --bg-card: #f1f5f9;
-      --bg-code: #e2e8f0;
-      --border: #cbd5e1;
-      --border-focus: #2563eb;
-      --text: #0f172a;
-      --text-muted: #475569;
-      --text-dim: #64748b;
-      --primary: #2563eb;
-      --primary-hover: #1d4ed8;
-      --accent: #059669;
-      --warning: #d97706;
+    html[data-theme="dark"] {
+      --bg: #0d1119;
+      --surface: rgba(20, 27, 40, 0.9);
+      --surface-solid: #141b28;
+      --text: #edf1f7;
+      --muted: #a7b0c2;
+      --border: #2a3447;
+      --accent: #8ea2ff;
+      --accent-strong: #b5c1ff;
+      --accent-soft: #1d2746;
+      --code-bg: #080c13;
+      --code-text: #e5e7eb;
+      --shadow: 0 14px 40px rgba(0, 0, 0, 0.22);
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
     body {
-      background-color: var(--bg);
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 10% -10%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 34rem),
+        var(--bg);
       color: var(--text);
-      font-family: var(--font-sans);
-      line-height: 1.6;
-      -webkit-font-smoothing: antialiased;
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.55;
     }
 
-    a { color: var(--primary); text-decoration: none; }
-    a:hover { text-decoration: underline; }
+    a { color: var(--accent); }
+    a:hover { color: var(--accent-strong); }
 
-    .container {
-      max-width: 1140px;
+    .shell {
+      width: min(calc(100% - 32px), var(--max));
       margin: 0 auto;
-      padding: 0 1.5rem;
     }
 
-    /* Navbar */
-    header {
+    .topbar {
       position: sticky;
       top: 0;
-      z-index: 50;
-      background: rgba(9, 13, 22, 0.85);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border);
-    }
-    [data-theme="light"] header {
-      background: rgba(248, 250, 252, 0.85);
+      z-index: 10;
+      border-bottom: 1px solid color-mix(in srgb, var(--border) 78%, transparent);
+      background: color-mix(in srgb, var(--bg) 86%, transparent);
+      backdrop-filter: blur(16px);
     }
 
-    .nav-inner {
+    .nav {
+      min-height: 62px;
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      height: 64px;
+      gap: 18px;
     }
 
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-weight: 700;
-      font-size: 1.15rem;
+    .brand {
+      margin-right: auto;
       color: var(--text);
-    }
-    .logo-badge {
-      font-size: 0.7rem;
-      background: var(--primary);
-      color: #fff;
-      padding: 0.15rem 0.45rem;
-      border-radius: 4px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
+      font-weight: 780;
+      letter-spacing: -0.02em;
+      text-decoration: none;
     }
 
     .nav-links {
       display: flex;
-      gap: 1.5rem;
       align-items: center;
-      font-size: 0.95rem;
+      gap: 16px;
+      font-size: 0.92rem;
     }
+
     .nav-links a {
-      color: var(--text-muted);
-      transition: color 0.15s;
-    }
-    .nav-links a:hover {
-      color: var(--text);
+      color: var(--muted);
       text-decoration: none;
-    }
-
-    .theme-toggle {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 0.4rem 0.8rem;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 0.85rem;
-    }
-
-    /* Hero */
-    .hero {
-      padding: 5rem 0 3.5rem;
-      text-align: center;
-      border-bottom: 1px solid var(--border);
-    }
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.35rem 0.9rem;
-      background: rgba(59, 130, 246, 0.12);
-      border: 1px solid rgba(59, 130, 246, 0.3);
-      color: var(--primary);
-      border-radius: 9999px;
-      font-size: 0.85rem;
-      font-weight: 500;
-      margin-bottom: 1.5rem;
-    }
-    .hero h1 {
-      font-size: 3rem;
-      font-weight: 800;
-      line-height: 1.15;
-      margin-bottom: 1.25rem;
-      text-wrap: balance;
-    }
-    .hero p {
-      font-size: 1.25rem;
-      color: var(--text-muted);
-      max-width: 780px;
-      margin: 0 auto 2rem;
-      text-wrap: pretty;
-    }
-
-    .hero-actions {
-      display: flex;
-      justify-content: center;
-      gap: 1rem;
-      flex-wrap: wrap;
-      margin-bottom: 2.5rem;
-    }
-
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.75rem 1.4rem;
-      border-radius: 8px;
       font-weight: 600;
-      font-size: 0.95rem;
-      cursor: pointer;
-      border: 1px solid transparent;
-      transition: all 0.15s ease-out;
-    }
-    .btn-primary {
-      background: var(--primary);
-      color: #ffffff;
-    }
-    .btn-primary:hover {
-      background: var(--primary-hover);
-      text-decoration: none;
-    }
-    .btn-secondary {
-      background: var(--bg-card);
-      border-color: var(--border);
-      color: var(--text);
-    }
-    .btn-secondary:hover {
-      border-color: var(--text-muted);
-      text-decoration: none;
     }
 
-    .install-bar {
+    .nav-links a:hover { color: var(--text); }
+
+    button, .button {
+      min-height: 40px;
+      border-radius: 11px;
+      border: 1px solid var(--border);
+      font: inherit;
+      font-weight: 700;
+    }
+
+    button {
+      padding: 0 12px;
+      cursor: pointer;
+      color: var(--text);
+      background: var(--surface-solid);
+    }
+
+    button:hover { border-color: var(--accent); }
+    button:focus-visible, a:focus-visible {
+      outline: 3px solid color-mix(in srgb, var(--accent) 34%, transparent);
+      outline-offset: 2px;
+    }
+
+    main { padding: 56px 0 32px; }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.25fr) minmax(300px, 0.75fr);
+      gap: 28px;
+      align-items: center;
+      padding: 34px 0 54px;
+    }
+
+    .eyebrow {
       display: inline-flex;
       align-items: center;
-      background: var(--bg-code);
+      gap: 8px;
+      padding: 6px 10px;
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 0.6rem 1rem;
-      font-family: var(--font-mono);
-      font-size: 0.95rem;
-      color: var(--text);
+      border-radius: 999px;
+      background: var(--surface);
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 750;
+      letter-spacing: 0.02em;
     }
-    .copy-btn {
-      background: transparent;
-      border: none;
-      color: var(--text-dim);
-      margin-left: 0.75rem;
-      cursor: pointer;
-      font-size: 0.9rem;
-    }
-    .copy-btn:hover { color: var(--text); }
 
-    /* Section common */
-    section {
-      padding: 4rem 0;
+    h1 {
+      margin: 14px 0 14px;
+      max-width: 760px;
+      font-size: clamp(2.4rem, 6vw, 4.8rem);
+      line-height: 0.98;
+      letter-spacing: -0.055em;
+    }
+
+    .hero p {
+      margin: 0;
+      max-width: 720px;
+      color: var(--muted);
+      font-size: clamp(1rem, 2vw, 1.18rem);
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 24px;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 16px;
+      text-decoration: none;
+    }
+
+    .button.primary {
+      color: #fff;
+      border-color: var(--accent-strong);
+      background: var(--accent-strong);
+    }
+
+    .button.secondary {
+      color: var(--text);
+      background: var(--surface-solid);
+    }
+
+    .hero-panel, .card, .code-card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .hero-panel {
+      padding: 18px;
+    }
+
+    .status-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 0;
       border-bottom: 1px solid var(--border);
     }
-    .section-header {
-      margin-bottom: 2.5rem;
-    }
-    .section-tag {
-      font-size: 0.8rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--primary);
-      font-weight: 700;
-      margin-bottom: 0.5rem;
-    }
-    .section-title {
-      font-size: 2rem;
-      font-weight: 700;
-      margin-bottom: 0.75rem;
-    }
-    .section-desc {
-      color: var(--text-muted);
-      font-size: 1.05rem;
-      max-width: 720px;
+
+    .status-row:last-child { border-bottom: 0; }
+    .status-row strong { min-width: 92px; }
+    .status-row span { color: var(--muted); font-size: 0.92rem; }
+
+    section {
+      scroll-margin-top: 82px;
+      padding: 32px 0;
     }
 
-    /* Grid & Cards */
-    .grid-2 {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 1.5rem;
+    .section-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 18px;
     }
-    .grid-3 {
+
+    .section-head h2 {
+      margin: 0;
+      font-size: clamp(1.55rem, 3vw, 2.15rem);
+      letter-spacing: -0.035em;
+    }
+
+    .section-head p {
+      margin: 0;
+      max-width: 620px;
+      color: var(--muted);
+    }
+
+    .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 1.5rem;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
     }
 
     .card {
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 1.75rem;
+      padding: 18px;
     }
-    .card-icon {
-      font-size: 1.75rem;
-      margin-bottom: 1rem;
-    }
+
     .card h3 {
-      font-size: 1.25rem;
-      margin-bottom: 0.5rem;
+      margin: 0 0 8px;
+      font-size: 1rem;
     }
+
     .card p {
-      color: var(--text-muted);
-      font-size: 0.95rem;
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.92rem;
     }
 
-    /* Comparison Table */
-    .table-container {
-      overflow-x: auto;
+    .pill {
+      display: inline-block;
+      margin-bottom: 12px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      color: var(--accent-strong);
+      background: var(--accent-soft);
+      font-size: 0.76rem;
+      font-weight: 800;
+    }
+
+    .install-grid {
+      display: grid;
+      grid-template-columns: 0.85fr 1.15fr;
+      gap: 16px;
+      align-items: stretch;
+    }
+
+    .install-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .install-item {
+      padding: 14px 16px;
       border: 1px solid var(--border);
-      border-radius: 10px;
-      background: var(--bg-surface);
+      border-radius: 14px;
+      background: var(--surface);
     }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      text-align: left;
-      font-size: 0.95rem;
-    }
-    th, td {
-      padding: 0.9rem 1.2rem;
-      border-bottom: 1px solid var(--border);
-    }
-    th {
-      background: var(--bg-card);
-      font-weight: 600;
-      color: var(--text);
-    }
-    td.num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
-    .badge-win { color: var(--accent); font-weight: 600; }
 
-    /* Interactive Platform Selector */
-    .tab-nav {
+    .install-item strong { display: block; margin-bottom: 3px; }
+    .install-item code { color: var(--accent-strong); font-size: 0.83rem; word-break: break-word; }
+
+    .code-card {
+      overflow: hidden;
+      background: var(--code-bg);
+    }
+
+    .code-head {
       display: flex;
-      gap: 0.5rem;
-      background: var(--bg-card);
-      padding: 0.35rem;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      margin-bottom: 1.5rem;
-      width: fit-content;
-      flex-wrap: wrap;
-    }
-    .tab-btn {
-      background: transparent;
-      border: none;
-      color: var(--text-muted);
-      padding: 0.5rem 1rem;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 500;
-      font-size: 0.9rem;
-    }
-    .tab-btn.active {
-      background: var(--primary);
-      color: #fff;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 13px;
+      border-bottom: 1px solid #253044;
+      color: #9ca3af;
+      font-size: 0.8rem;
     }
 
-    .tab-content {
-      background: var(--bg-code);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 1.5rem;
-    }
-    .tab-content pre {
-      font-family: var(--font-mono);
-      font-size: 0.9rem;
-      color: var(--text);
-      overflow-x: auto;
+    .copy {
+      min-height: 32px;
+      border-color: #344055;
+      background: #182131;
+      color: #dbe4f3;
+      font-size: 0.78rem;
     }
 
-    /* Simulator */
-    .sim-box {
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 2rem;
-    }
-    .form-group {
-      margin-bottom: 1.25rem;
-    }
-    .form-label {
-      display: block;
-      font-weight: 600;
-      margin-bottom: 0.4rem;
-      font-size: 0.9rem;
-    }
-    .form-control, .form-select {
-      width: 100%;
-      background: var(--bg-code);
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 0.75rem 1rem;
-      border-radius: 8px;
-      font-size: 0.95rem;
-      font-family: inherit;
-    }
-    .form-control:focus, .form-select:focus {
-      outline: none;
-      border-color: var(--border-focus);
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      color: var(--code-text);
+      font: 0.86rem/1.58 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     }
 
-    .result-box {
-      background: var(--bg-code);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 1.25rem;
-      margin-top: 1.5rem;
-      display: none;
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+
+    .facts {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
     }
-    .result-header {
+
+    .fact {
+      padding: 18px;
+      border-left: 3px solid var(--accent);
+      background: var(--surface);
+      border-radius: 0 14px 14px 0;
+    }
+
+    .fact strong { display: block; margin-bottom: 5px; }
+    .fact span { color: var(--muted); font-size: 0.92rem; }
+
+    .note {
+      margin-top: 16px;
+      padding: 14px 16px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      color: var(--muted);
+      background: var(--surface);
+      font-size: 0.92rem;
+    }
+
+    footer {
+      margin-top: 24px;
+      border-top: 1px solid var(--border);
+      padding: 28px 0 36px;
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    .footer-row {
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1rem;
-      font-size: 0.9rem;
-      color: var(--text-dim);
-    }
-    .metric-chip {
-      background: rgba(16, 185, 129, 0.15);
-      color: var(--accent);
-      padding: 0.2rem 0.6rem;
-      border-radius: 4px;
-      font-weight: 600;
+      gap: 20px;
+      flex-wrap: wrap;
     }
 
-    /* Footer */
-    footer {
-      padding: 3rem 0;
-      color: var(--text-dim);
-      font-size: 0.9rem;
-      text-align: center;
+    @media (max-width: 900px) {
+      .hero, .install-grid { grid-template-columns: 1fr; }
+      .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .facts { grid-template-columns: 1fr; }
+      .hero { padding-top: 18px; }
     }
-    footer a { color: var(--text-muted); }
 
-    @media (max-width: 768px) {
-      .hero h1 { font-size: 2.25rem; }
-      .nav-links { display: none; }
+    @media (max-width: 640px) {
+      .shell { width: min(calc(100% - 22px), var(--max)); }
+      .nav { min-height: 56px; }
+      .nav-links a { display: none; }
+      main { padding-top: 30px; }
+      .hero { gap: 18px; padding-bottom: 32px; }
+      .grid { grid-template-columns: 1fr; }
+      .section-head { display: block; }
+      .section-head p { margin-top: 8px; }
+      section { padding: 24px 0; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
     }
   </style>
 </head>
 <body>
-
-  <header>
-    <div class="container nav-inner">
-      <div class="logo">
-        <span>⚡ Laya Universal</span>
-        <span class="logo-badge">v0.1.1</span>
-      </div>
-      <nav class="nav-links">
-        <a href="#ideation">Ideation</a>
-        <a href="#platforms">Platforms</a>
-        <a href="#simulator">Live Simulator</a>
-        <a href="#benchmarks">Benchmarks</a>
-        <a href="#security">Security</a>
-        <a href="https://github.com/abusuraihsakhri/laya-universal" target="_blank" rel="noopener">GitHub</a>
-        <button class="theme-toggle" id="theme-btn" aria-label="Toggle dark/light theme">🌓 Theme</button>
+  <header class="topbar">
+    <div class="shell nav">
+      <a class="brand" href="#top">Laya Universal</a>
+      <nav class="nav-links" aria-label="Primary navigation">
+        <a href="#backends">Backends</a>
+        <a href="#install">Install</a>
+        <a href="#usage">Usage</a>
+        <a href="#behavior">Behavior</a>
       </nav>
+      <button id="theme-toggle" type="button" aria-label="Switch color theme">Dark mode</button>
     </div>
   </header>
 
-  <main>
-    <!-- Hero Section -->
-    <section class="hero">
-      <div class="container">
-        <div class="pill">
-          <span>🛡️ OWASP Top 10: 2025 Audited</span>
-          <span>•</span>
-          <span>Zero PyTorch Footprint</span>
-        </div>
-        <h1>High-Speed Typed Decision Inference Everywhere</h1>
+  <main id="top" class="shell">
+    <section class="hero" aria-labelledby="hero-title">
+      <div>
+        <span class="eyebrow">Python 3.10+ · Apache-2.0</span>
+        <h1 id="hero-title">Typed-decision inference across desktop platforms.</h1>
         <p>
-          Sub-15ms structured classification (<code>choice</code>, <code>score</code>, <code>noul</code>) across Windows (DirectML), Linux (CUDA), and macOS (MLX Metal & CoreML).
+          A common Python runtime for Laya checkpoints using ONNX Runtime on Windows,
+          Linux, and macOS, with an MLX backend for supported Apple Silicon systems.
         </p>
+        <div class="actions">
+          <a class="button primary" href="https://github.com/abusuraihsakhri/laya-universal">View repository</a>
+          <a class="button secondary" href="#install">Installation</a>
+        </div>
+      </div>
 
-        <div class="hero-actions">
-          <a href="#platforms" class="btn btn-primary">Get Started</a>
-          <a href="#simulator" class="btn btn-secondary">Try Live Simulator</a>
-          <a href="https://github.com/abusuraihsakhri/laya-universal" class="btn btn-secondary" target="_blank">View on GitHub</a>
+      <aside class="hero-panel" aria-label="Project summary">
+        <div class="status-row"><strong>Decisions</strong><span>choice · score · noul</span></div>
+        <div class="status-row"><strong>ONNX</strong><span>CPU · CUDA · DirectML · CoreML when available</span></div>
+        <div class="status-row"><strong>Apple</strong><span>MLX backend for compatible safetensors checkpoints</span></div>
+        <div class="status-row"><strong>Pages</strong><span>Static documentation; inference remains local Python</span></div>
+      </aside>
+    </section>
+
+    <section id="backends" aria-labelledby="backends-title">
+      <div class="section-head">
+        <div>
+          <h2 id="backends-title">Runtime backends</h2>
+        </div>
+        <p>
+          Backend selection considers both the providers available on the machine and
+          the weight format present in the checkpoint directory.
+        </p>
+      </div>
+
+      <div class="grid">
+        <article class="card">
+          <span class="pill">Universal</span>
+          <h3>ONNX CPU</h3>
+          <p>Uses <code>onnxruntime</code> and provides the portable fallback for ONNX checkpoints.</p>
+        </article>
+        <article class="card">
+          <span class="pill">NVIDIA</span>
+          <h3>ONNX CUDA</h3>
+          <p>Uses <code>onnxruntime-gpu</code> when the CUDA execution provider is available.</p>
+        </article>
+        <article class="card">
+          <span class="pill">Windows</span>
+          <h3>ONNX DirectML</h3>
+          <p>Uses <code>onnxruntime-directml</code> and selects the DirectML provider when present.</p>
+        </article>
+        <article class="card">
+          <span class="pill">Apple Silicon</span>
+          <h3>MLX</h3>
+          <p>Loads compatible <code>model.safetensors</code> checkpoints through MLX on supported systems.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="install" aria-labelledby="install-title">
+      <div class="section-head">
+        <div>
+          <h2 id="install-title">Install one inference runtime</h2>
+        </div>
+        <p>
+          The ONNX CPU, CUDA, and DirectML packages are alternative distributions.
+          Choose the one appropriate to the environment rather than installing them together.
+        </p>
+      </div>
+
+      <div class="install-grid">
+        <div class="install-list">
+          <div class="install-item">
+            <strong>CPU / standard ONNX</strong>
+            <code>python -m pip install ".[cpu]"</code>
+          </div>
+          <div class="install-item">
+            <strong>NVIDIA CUDA</strong>
+            <code>python -m pip install ".[gpu-cuda]"</code>
+          </div>
+          <div class="install-item">
+            <strong>Windows DirectML</strong>
+            <code>python -m pip install ".[gpu-directml]"</code>
+          </div>
+          <div class="install-item">
+            <strong>Apple Silicon MLX</strong>
+            <code>python -m pip install ".[mlx]"</code>
+          </div>
         </div>
 
-        <div class="install-bar">
-          <code>pip install laya-universal</code>
-          <button class="copy-btn" onclick="copyText('pip install laya-universal')" title="Copy to clipboard">📋</button>
+        <div class="code-card">
+          <div class="code-head">
+            <span>Clone and install</span>
+            <button class="copy" type="button" data-copy="git clone https://github.com/abusuraihsakhri/laya-universal.git&#10;cd laya-universal&#10;python -m pip install &quot;.[cpu]&quot;">Copy</button>
+          </div>
+          <pre><code>git clone https://github.com/abusuraihsakhri/laya-universal.git
+cd laya-universal
+python -m pip install ".[cpu]"</code></pre>
         </div>
       </div>
     </section>
 
-    <!-- Ideation & Core Concept -->
-    <section id="ideation">
-      <div class="container">
-        <div class="section-header">
-          <div class="section-tag">The Ideation & Architecture</div>
-          <h2 class="section-title">Why Typed Decisions Over Generative LLMs?</h2>
-          <p class="section-desc">
-            Routing, triage, safety guards, and content filtering don't need expensive token-by-token text generation.
-          </p>
+    <section id="usage" aria-labelledby="usage-title">
+      <div class="section-head">
+        <div>
+          <h2 id="usage-title">Minimal Python usage</h2>
         </div>
+        <p>
+          Point the runtime at a compatible local checkpoint or a supported Hugging Face
+          model repository, then submit typed question definitions.
+        </p>
+      </div>
 
-        <div class="grid-3">
-          <div class="card">
-            <div class="card-icon">⚡</div>
-            <h3>7–15ms Decision Latency</h3>
-            <p>
-              Single-pass bidirectional inference replaces 1,500ms generative autoregressive loops. Decisions execute in real-time within interactive loops.
-            </p>
-          </div>
-          <div class="card">
-            <div class="card-icon">🎯</div>
-            <h3>Formal Typing & Calibration</h3>
-            <p>
-              Strict schemas for <code>choice</code> (discrete categorical), <code>score</code> (ordinal ranking), and <code>noul</code> (epistemic confidence). No regex JSON parsing.
-            </p>
-          </div>
-          <div class="card">
-            <div class="card-icon">📦</div>
-            <h3>50 MB Runtime vs 2,000 MB</h3>
-            <p>
-              Eliminates the entire PyTorch stack. Operates with only NumPy, Rust Tokenizers, and ONNX Runtime for instant serverless cold-starts.
-            </p>
-          </div>
+      <div class="code-card">
+        <div class="code-head">
+          <span>Python</span>
+          <button class="copy" type="button" data-copy="import laya_universal as laya&#10;&#10;questions = {&#10;    &quot;department&quot;: {&#10;        &quot;type&quot;: &quot;choice&quot;,&#10;        &quot;instructions&quot;: &quot;Which team should handle this request?&quot;,&#10;        &quot;criteria&quot;: {&#10;            &quot;billing&quot;: &quot;invoices, charges, refunds&quot;,&#10;            &quot;technical&quot;: &quot;bugs, outages, integrations&quot;,&#10;            &quot;sales&quot;: &quot;pricing, plans, purchases&quot;,&#10;        },&#10;    }&#10;}&#10;&#10;agent = laya.load(&quot;./laya-onnx&quot;)&#10;result = agent.predict(&quot;I was charged twice.&quot;, questions)&#10;print(result[&quot;answers&quot;][&quot;department&quot;])">Copy</button>
         </div>
+        <pre><code>import laya_universal as laya
+
+questions = {
+    "department": {
+        "type": "choice",
+        "instructions": "Which team should handle this request?",
+        "criteria": {
+            "billing": "invoices, charges, refunds",
+            "technical": "bugs, outages, integrations",
+            "sales": "pricing, plans, purchases",
+        },
+    }
+}
+
+agent = laya.load("./laya-onnx")
+result = agent.predict("I was charged twice.", questions)
+print(result["answers"]["department"])</code></pre>
+      </div>
+
+      <div class="note">
+        Remote model IDs can trigger a Hugging Face Hub download. Inference itself runs in
+        the local Python process. The GitHub Pages site does not upload input data or execute
+        a model.
       </div>
     </section>
 
-    <!-- Platform Hardware Matrix -->
-    <section id="platforms">
-      <div class="container">
-        <div class="section-header">
-          <div class="section-tag">Universal Hardware Support</div>
-          <h2 class="section-title">Hardware Acceleration on Every Platform</h2>
-          <p class="section-desc">
-            Select your operating system and hardware accelerator to inspect the installation path and configuration:
-          </p>
+    <section id="behavior" aria-labelledby="behavior-title">
+      <div class="section-head">
+        <div>
+          <h2 id="behavior-title">Important behavior</h2>
         </div>
+        <p>
+          These constraints come from the current source implementation and should be
+          considered when integrating the package.
+        </p>
+      </div>
 
-        <div class="tab-nav" role="tablist">
-          <button class="tab-btn active" onclick="switchTab('win')">🪟 Windows (DirectML)</button>
-          <button class="tab-btn" onclick="switchTab('linux')">🐧 Linux (NVIDIA CUDA)</button>
-          <button class="tab-btn" onclick="switchTab('mac')">🍏 macOS (Apple Silicon)</button>
-          <button class="tab-btn" onclick="switchTab('cpu')">💻 Universal CPU</button>
+      <div class="facts">
+        <div class="fact">
+          <strong>Checkpoint format matters</strong>
+          <span>ONNX backends require an ONNX weight file. MLX uses <code>model.safetensors</code>; incompatible formats are rejected with an explicit error.</span>
         </div>
-
-        <div id="tab-win" class="tab-content">
-          <p style="margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">
-            ✓ DirectML acceleration works on ANY Windows GPU: NVIDIA, AMD Radeon, Intel Arc & Iris Xe.
-          </p>
-          <pre><code># 1. Install DirectML provider + Laya Universal
-pip install onnxruntime-directml
-pip install laya-universal
-
-# 2. Python Usage:
-import laya_universal as laya
-agent = laya.load("./laya-onnx")  # Automatically selects onnx-directml!
-result = agent.predict("Invoice double charged", questions)
-print(result["answers"]["department"]["choice"])</code></pre>
+        <div class="fact">
+          <strong>Shortlisting needs embeddings</strong>
+          <span>ONNX shortlisting can use <code>encoder.onnx</code> when present. Otherwise provide a separate embedding function or re-export the checkpoint.</span>
         </div>
-
-        <div id="tab-linux" class="tab-content" style="display:none;">
-          <p style="margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">
-            ✓ High-throughput CUDA execution on Linux servers and cloud GPUs.
-          </p>
-          <pre><code># 1. Install CUDA provider + Laya Universal
-pip install onnxruntime-gpu
-pip install laya-universal
-
-# 2. Python Usage:
-import laya_universal as laya
-agent = laya.load("./laya-onnx")  # Automatically selects onnx-cuda!
-result = agent.predict(state, questions)</code></pre>
-        </div>
-
-        <div id="tab-mac" class="tab-content" style="display:none;">
-          <p style="margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">
-            ✓ Native Apple MLX Metal backend reading model.safetensors directly.
-          </p>
-          <pre><code># 1. Install MLX extras (Apple Silicon ARM64, macOS 13.5+)
-pip install "laya-universal[mlx]"
-
-# 2. Python Usage:
-import laya_universal as laya
-agent = laya.load("aac6fef/laya-mlx")  # Runs natively on Metal GPU!
-result = agent.predict(state, questions)</code></pre>
-        </div>
-
-        <div id="tab-cpu" class="tab-content" style="display:none;">
-          <p style="margin-bottom: 0.75rem; color: var(--accent); font-weight: 600;">
-            ✓ Universal fallback with SIMD vectorization (AVX2 / AVX-512).
-          </p>
-          <pre><code># 1. Standard pip install
-pip install laya-universal
-
-# 2. Python Usage:
-import laya_universal as laya
-agent = laya.load("./laya-onnx", backend="cpu")
-result = agent.predict(state, questions)</code></pre>
+        <div class="fact">
+          <strong>Validate model quality yourself</strong>
+          <span>Presets and routing helpers define inputs and workflow structure; they do not establish task accuracy, calibration, or fitness for a deployment.</span>
         </div>
       </div>
-    </section>
 
-    <!-- Interactive Decision Simulator -->
-    <section id="simulator">
-      <div class="container">
-        <div class="section-header">
-          <div class="section-tag">Interactive Preview</div>
-          <h2 class="section-title">Live Decision Model Simulator</h2>
-          <p class="section-desc">
-            Test how Laya typed decision models classify intent, compute normalized Shannon entropy confidence, and output structured choices.
-          </p>
-        </div>
-
-        <div class="sim-box">
-          <div class="form-group">
-            <label class="form-label" for="sim-preset">Select Workflow Preset Scenario:</label>
-            <select class="form-select" id="sim-preset" onchange="loadPreset()">
-              <option value="billing">Customer Billing Dispute (Choice: billing/technical/sales)</option>
-              <option value="security">Security Incident Triage (Score: 0-2 Urgency)</option>
-              <option value="refund">Refund Request Extraction (Noul: Boolean holds)</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label" for="sim-state">Input State Payload:</label>
-            <textarea class="form-control" id="sim-state" rows="3">Customer account #8912 was charged twice for the annual renewal fee on invoice #49281. Requesting an immediate refund.</textarea>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label" for="sim-question">Question Schema & Instructions:</label>
-            <textarea class="form-control" id="sim-question" rows="4" style="font-family: var(--font-mono); font-size: 0.85rem;"></textarea>
-          </div>
-
-          <button class="btn btn-primary" onclick="runSimulation()">⚡ Run Inference Simulation</button>
-
-          <div class="result-box" id="result-box">
-            <div class="result-header">
-              <span>Execution Backend: <strong>onnx-directml (GPU)</strong></span>
-              <span class="metric-chip" id="res-latency">⏱️ 8.9 ms</span>
-            </div>
-            <pre><code id="res-json"></code></pre>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Benchmarks -->
-    <section id="benchmarks">
-      <div class="container">
-        <div class="section-header">
-          <div class="section-tag">Performance & Footprint</div>
-          <h2 class="section-title">Benchmarks: Runtime Efficiency</h2>
-          <p class="section-desc">
-            Measured across production environments: cold-start latency, memory consumption, and inference speeds.
-          </p>
-        </div>
-
-        <div class="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>Runtime Stack</th>
-                <th>Target Platform</th>
-                <th>Package Size</th>
-                <th>Cold Start</th>
-                <th>Inference Latency</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><strong>Laya Universal (DirectML)</strong></td>
-                <td>Windows (AMD/NVIDIA/Intel)</td>
-                <td class="num badge-win">~52 MB</td>
-                <td class="num badge-win">&lt;90 ms</td>
-                <td class="num badge-win"><strong>8–14 ms</strong></td>
-              </tr>
-              <tr>
-                <td><strong>Laya Universal (CUDA)</strong></td>
-                <td>Linux (NVIDIA)</td>
-                <td class="num badge-win">~78 MB</td>
-                <td class="num badge-win">&lt;85 ms</td>
-                <td class="num badge-win"><strong>6–11 ms</strong></td>
-              </tr>
-              <tr>
-                <td><strong>Laya Universal (MLX)</strong></td>
-                <td>Apple Silicon (Metal)</td>
-                <td class="num badge-win">~45 MB</td>
-                <td class="num badge-win">&lt;75 ms</td>
-                <td class="num badge-win"><strong>7–13 ms</strong></td>
-              </tr>
-              <tr>
-                <td><strong>Laya Universal (CPU)</strong></td>
-                <td>Universal x86_64/ARM64</td>
-                <td class="num badge-win">~50 MB</td>
-                <td class="num badge-win">&lt;80 ms</td>
-                <td class="num">18–32 ms</td>
-              </tr>
-              <tr>
-                <td><em>Upstream PyTorch</em></td>
-                <td>NVIDIA / CPU</td>
-                <td class="num">~2,150 MB</td>
-                <td class="num">~1,850 ms</td>
-                <td class="num">15–40 ms</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- Security Section -->
-    <section id="security">
-      <div class="container">
-        <div class="section-header">
-          <div class="section-tag">Security & Integrity</div>
-          <h2 class="section-title">Engineered to the OWASP Top 10: 2025</h2>
-          <p class="section-desc">
-            Audited for enterprise deployment in local agents and automated pipelines.
-          </p>
-        </div>
-
-        <div class="grid-2">
-          <div class="card">
-            <h3>🛡️ Path Traversal Defense (CWE-22)</h3>
-            <p>
-              Rejects Windows backslashes (<code>..\..</code>), drive roots (<code>C:\</code>), and UNC network shares in subfolders, ensuring model weights never escape designated directories.
-            </p>
-          </div>
-          <div class="card">
-            <h3>🔒 Thread-Safe Inference Sessions (CWE-362)</h3>
-            <p>
-              Lazy session initialization is protected by thread locks, ensuring high-concurrency web services serve simultaneous requests without memory corruption.
-            </p>
-          </div>
-          <div class="card">
-            <h3>🌐 UTF-8 Locale Protection (CWE-754)</h3>
-            <p>
-              Enforces explicit UTF-8 decoding across all tokenizer configs and model metadata, preventing Windows ANSI (<code>cp1252</code>) crashes on international languages.
-            </p>
-          </div>
-          <div class="card">
-            <h3>📜 Full SAST Audit Trail</h3>
-            <p>
-              Includes full vulnerability disclosures, severity ratings, and automated regression tests in <a href="https://github.com/abusuraihsakhri/laya-universal/blob/main/AUDIT.md" target="_blank">AUDIT.md</a>.
-            </p>
-          </div>
-        </div>
+      <div class="note">
+        For local development: <code>python -m pip install -e ".[cpu,dev]"</code>,
+        then run <code>python -m pip check</code>, <code>python -m pip_audit</code>,
+        <code>python -m ruff check laya_universal tests</code>, <code>python -m pytest -v</code>,
+        and <code>python -m build</code>.
       </div>
     </section>
   </main>
 
   <footer>
-    <div class="container">
-      <p style="margin-bottom: 0.5rem;">
-        <strong>Laya Universal</strong> is open-source under the <a href="https://github.com/abusuraihsakhri/laya-universal/blob/main/LICENSE">Apache-2.0 License</a>.
-      </p>
-      <p>
-        Maintained by <a href="https://github.com/abusuraihsakhri" target="_blank">abusuraihsakhri</a>. Derived from upstream <a href="https://github.com/NandhaKishorM/laya" target="_blank">Laya</a> and <a href="https://github.com/mizorewww/laya-mlx" target="_blank">laya-mlx</a>.
-      </p>
+    <div class="shell footer-row">
+      <span>Apache-2.0 · laya-universal</span>
+      <span>
+        <a href="https://github.com/abusuraihsakhri/laya-universal/blob/main/README.md">README</a>
+        ·
+        <a href="https://github.com/abusuraihsakhri/laya-universal/blob/main/SECURITY.md">Security policy</a>
+        ·
+        <a href="https://github.com/abusuraihsakhri/laya-universal/blob/main/NOTICE">Attribution</a>
+      </span>
     </div>
   </footer>
 
   <script>
-    // Tab switching
-    function switchTab(platform) {
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
-      event.target.classList.add('active');
-      document.getElementById('tab-' + platform).style.display = 'block';
-    }
+    (() => {
+      const root = document.documentElement;
+      const toggle = document.getElementById("theme-toggle");
+      const stored = localStorage.getItem("laya-theme");
+      const preferredDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const initial = stored === "dark" || stored === "light"
+        ? stored
+        : (preferredDark ? "dark" : "light");
 
-    // Theme toggle
-    const themeBtn = document.getElementById('theme-btn');
-    themeBtn.addEventListener('click', () => {
-      const current = document.documentElement.getAttribute('data-theme');
-      const next = current === 'light' ? 'dark' : 'light';
-      document.documentElement.setAttribute('data-theme', next);
-    });
-
-    // Copy to clipboard
-    function copyText(text) {
-      navigator.clipboard.writeText(text);
-      alert('Copied to clipboard: ' + text);
-    }
-
-    // Simulator presets
-    const PRESETS = {
-      billing: {
-        state: "Customer account #8912 was charged twice for the annual renewal fee on invoice #49281. Requesting an immediate refund.",
-        question: JSON.stringify({
-          "department": {
-            "type": "choice",
-            "instructions": "Which department should handle this ticket?",
-            "criteria": {
-              "billing": "Invoices, double charges, payment disputes, refunds",
-              "technical": "Application crashes, server bugs, API failures",
-              "sales": "Plan upgrades, renewals, new licenses"
-            }
-          }
-        }, null, 2),
-        simOutput: {
-          "model": "laya-rl-agent",
-          "answers": {
-            "department": {
-              "type": "choice",
-              "choice": "billing",
-              "confidence": 0.9412,
-              "probabilities": {
-                "billing": 0.9634,
-                "technical": 0.0211,
-                "sales": 0.0155
-              },
-              "action": { "act_probability": 0.9981 }
-            }
-          },
-          "usage": { "input_tokens": 68, "output_tokens": 0 }
-        }
-      },
-      security: {
-        state: "Repeated SSH failed logins originating from unknown IP 198.51.100.22 targeting root credentials followed by an anomalous sudo escalation attempt.",
-        question: JSON.stringify({
-          "incident_severity": {
-            "type": "score",
-            "instructions": "Rate the incident severity.",
-            "criteria": ["low priority log event", "moderate investigation needed", "critical security escalation block"]
-          }
-        }, null, 2),
-        simOutput: {
-          "model": "laya-rl-agent",
-          "answers": {
-            "incident_severity": {
-              "type": "score",
-              "score": 1.9124,
-              "confidence": 0.8842,
-              "probabilities": {
-                "0": 0.0125,
-                "1": 0.0626,
-                "2": 0.9249
-              },
-              "action": { "act_probability": 0.9995 }
-            }
-          },
-          "usage": { "input_tokens": 74, "output_tokens": 0 }
-        }
-      },
-      refund: {
-        state: "The software subscription was canceled last week, but our credit card was still debited $120. Please refund the charge.",
-        question: JSON.stringify({
-          "refund_requested": {
-            "type": "noul",
-            "instructions": "The customer explicitly requests a refund or financial credit.",
-            "criteria": {
-              "false": "No monetary refund requested",
-              "true": "Refund or billing adjustment requested"
-            }
-          }
-        }, null, 2),
-        simOutput: {
-          "model": "laya-rl-agent",
-          "answers": {
-            "refund_requested": {
-              "type": "noul",
-              "noul": 0.9845,
-              "confidence": 0.9845,
-              "action": { "act_probability": 0.9988 }
-            }
-          },
-          "usage": { "input_tokens": 58, "output_tokens": 0 }
-        }
+      function setTheme(theme) {
+        root.setAttribute("data-theme", theme);
+        toggle.textContent = theme === "dark" ? "Light mode" : "Dark mode";
+        toggle.setAttribute("aria-label", theme === "dark" ? "Switch to light mode" : "Switch to dark mode");
       }
-    };
 
-    function loadPreset() {
-      const key = document.getElementById('sim-preset').value;
-      const data = PRESETS[key];
-      document.getElementById('sim-state').value = data.state;
-      document.getElementById('sim-question').value = data.question;
-      document.getElementById('result-box').style.display = 'none';
-    }
+      setTheme(initial);
 
-    function runSimulation() {
-      const key = document.getElementById('sim-preset').value;
-      const data = PRESETS[key];
-      const resultBox = document.getElementById('result-box');
-      const latencyChip = document.getElementById('res-latency');
-      const jsonCode = document.getElementById('res-json');
+      toggle.addEventListener("click", () => {
+        const next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+        localStorage.setItem("laya-theme", next);
+        setTheme(next);
+      });
 
-      const simulatedLatency = (7.5 + Math.random() * 4.0).toFixed(1);
-      latencyChip.textContent = `⏱️ ${simulatedLatency} ms (DirectML GPU)`;
-      jsonCode.textContent = JSON.stringify(data.simOutput, null, 2);
-      resultBox.style.display = 'block';
-    }
-
-    // Initialize preset on load
-    loadPreset();
+      document.querySelectorAll("[data-copy]").forEach((button) => {
+        button.addEventListener("click", async () => {
+          const text = button.getAttribute("data-copy") || "";
+          try {
+            await navigator.clipboard.writeText(text);
+            const prior = button.textContent;
+            button.textContent = "Copied";
+            window.setTimeout(() => { button.textContent = prior; }, 1200);
+          } catch {
+            button.textContent = "Select code";
+          }
+        });
+      });
+    })();
   </script>
 </body>
 </html>
