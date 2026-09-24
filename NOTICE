@@ -1,0 +1,18 @@
+laya-universal
+Copyright 2026 laya-universal contributors
+
+This product includes software developed as part of the Laya project
+(https://github.com/NandhaKishorM/laya), Copyright Convai Innovations and
+upstream contributors, licensed under the Apache License, Version 2.0.
+Prompt construction, calibration, language routing, presets, email utilities
+and the ONNX export flow are adapted from that project.
+
+This product includes software from laya-mlx
+(https://github.com/mizorewww/laya-mlx), licensed under the Apache License,
+Version 2.0. The MLX model implementation in
+laya_universal/backends/mlx_backend.py is ported from that project, which is
+itself an independent MLX port of Laya.
+
+Laya and its pretrained weights are by Convai Innovations and upstream
+contributors. laya-universal is an independent cross-platform port; it is not
+an official Convai Innovations release.
