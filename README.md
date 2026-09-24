@@ -165,23 +165,18 @@ No server-side component is provided by this repository. GitHub Pages hosts stat
 ```bash
 python -m pip install -e ".[cpu,dev]"
 python -m pip check
-python -m pip_audit
 python -m ruff check laya_universal tests
 python -m pytest -v
 python -m build
 ```
 
-CI runs linting, dependency consistency checks, dependency auditing, and the test suite on Windows and Ubuntu across Python 3.10, 3.11, and 3.12. It also verifies that the package builds successfully.
+CI runs dependency consistency checks, linting, and the test suite on Windows and Ubuntu across Python 3.10, 3.11, and 3.12. It also verifies that the package builds successfully.
 
 ## Browser compatibility
 
 The documentation site works as a static GitHub Pages site in modern browsers. The Python inference package itself is not currently a browser application. It depends on native Python inference runtimes and checkpoint assets, so this repository does not attempt to run the Python API through Pyodide or PyScript.
 
 For a browser-native inference implementation, ONNX Runtime Web would require a separate JavaScript/WebAssembly integration and model compatibility testing; that is outside the current package.
-
-## Security reporting
-
-See [SECURITY.md](SECURITY.md) for responsible vulnerability reporting. Do not include credentials, tokens, private model artifacts, or sensitive production data in public issues.
 
 ## License and attribution
 
