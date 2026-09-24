@@ -1,21 +1,16 @@
 # Security Policy
 
-## Supported Versions
+## Supported versions
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 0.1.x   | :white_check_mark: |
+The current `0.1.x` development line receives security fixes.
 
-## Reporting a Vulnerability
+## Reporting a vulnerability
 
-We take the security of `laya-universal` seriously. If you believe you have discovered a security vulnerability or security-relevant flaw, please report it responsibly:
+Please report suspected vulnerabilities privately rather than opening a public issue.
 
-- **Primary Contact:** `abusuraihsakhri@gmail.com`
-- **Subject:** `[SECURITY] laya-universal Vulnerability Report`
+- Contact: `abusuraihsakhri@gmail.com`
+- Suggested subject: `[SECURITY] laya-universal vulnerability report`
 
-Please include:
-1. Description of the vulnerability and affected components.
-2. Steps or proof-of-concept code to reproduce the issue.
-3. Potential impact or threat vector under the OWASP Top 10 framework.
+Include the affected version or commit, the relevant component, reproducible steps, expected impact, and any proposed mitigation if available. Do not include credentials, access tokens, private model files, or unrelated sensitive data in the report.
 
-We will acknowledge receipt within 48 hours and work with you on a coordinated disclosure timeline.
+Public disclosure should wait until the issue has been reviewed and an appropriate remediation or disclosure plan has been established.
