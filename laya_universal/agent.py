@@ -79,11 +79,17 @@ def _download_patterns(files, subfolder):
     ]
     if files is None:
         patterns += [prefix + "model.safetensors"] + [prefix + n for n in ONNX_WEIGHT_FILES]
+        patterns.append(prefix + "encoder.onnx")
         return patterns
+
+    found_weight = False
     for name in ("model.safetensors", *ONNX_WEIGHT_FILES):
         if prefix + name in files:
             patterns.append(prefix + name)
-    if len(patterns) == 3:  # no recognizable weights; let snapshot_download explain
+            found_weight = True
+    if prefix + "encoder.onnx" in files:
+        patterns.append(prefix + "encoder.onnx")
+    if not found_weight:  # no recognizable weights; let snapshot_download explain
         patterns.append(prefix + "model.safetensors")
     return patterns
 
