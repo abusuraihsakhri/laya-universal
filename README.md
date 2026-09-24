@@ -1,422 +1,190 @@
 # Laya Universal
 
+### [Open the Documentation Site →](https://abusuraihsakhri.github.io/laya-universal/)
+
 [![CI](https://github.com/abusuraihsakhri/laya-universal/actions/workflows/ci.yml/badge.svg)](https://github.com/abusuraihsakhri/laya-universal/actions/workflows/ci.yml)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
-[![License](https://img.shields.io/badge/license-Apache%202.0-green.svg)](LICENSE)
-[![Platforms](https://img.shields.io/badge/platforms-Windows%20%7C%20Linux%20%7C%20macOS-informational.svg)](README.md)
-[![Hardware](https://img.shields.io/badge/acceleration-DirectML%20%7C%20CUDA%20%7C%20Metal%20%7C%20CPU-orange.svg)](README.md)
-[![Security Audited](https://img.shields.io/badge/security-OWASP%20Top%2010%20(2025)%20Audited-success.svg)](AUDIT.md)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
+[![License](https://img.shields.io/badge/license-Apache--2.0-green.svg)](LICENSE)
 
-**Cross-platform, low-latency typed decision inference for Laya checkpoints.**
+Cross-platform inference utilities for Laya typed-decision checkpoints. The package provides a common Python API for ONNX Runtime backends on Windows, Linux, and macOS, plus an MLX backend for Apple Silicon.
 
-Run fast bidirectional decision models on **Windows** (DirectML GPU), **Linux** (CUDA GPU), and **macOS** (MLX Metal & CoreML) with a lightweight **~50 MB** runtime footprint — **zero PyTorch dependency at inference time**.
+## What it provides
 
----
+- Typed decisions using `choice`, `score`, and `noul` question schemas.
+- Format-aware backend selection for ONNX and MLX checkpoints.
+- ONNX Runtime provider support for CPU, CUDA, DirectML, and CoreML when those providers are available in the installed runtime.
+- Native MLX loading of `model.safetensors` on supported Apple Silicon systems.
+- Hugging Face Hub checkpoint resolution with optional revisions and subfolders.
+- Batched inference, bounded prompt-prefix caching, model routing, language/script routing, email preprocessing, and high-cardinality choice shortlisting.
+- A CLI for backend inspection, prediction, and one-time ONNX export.
 
-## 📑 Table of Contents
+The source code is authoritative for supported behavior. The documentation site is static documentation; it does not execute the Python inference runtime in the browser.
 
-- [The Ideation & Problem Space](#-the-ideation--problem-space)
-- [Architecture & Data Flow](#-architecture--data-flow)
-- [Performance & Runtime Matrix](#-performance--runtime-matrix)
-- [Installation Guide](#-installation-guide)
-- [Quick Start](#-quick-start)
-  - [Windows & Linux (DirectML / CUDA / CPU)](#windows--linux-directml--cuda--cpu)
-  - [Apple Silicon (Native MLX Metal)](#apple-silicon-native-mlx-metal)
-  - [Command-Line Interface (CLI)](#command-line-interface-cli)
-- [Comprehensive API Guide](#-comprehensive-api-guide)
-  - [1. Typed Decisions (`choice`, `score`, `noul`)](#1-typed-decisions-choice-score-noul)
-  - [2. Sub-Millisecond Language & Task Routing](#2-sub-millisecond-language--task-routing)
-  - [3. High-Cardinality Choice Shortlisting](#3-high-cardinality-choice-shortlisting)
-  - [4. Tokenized Prefix Caching](#4-tokenized-prefix-caching)
-  - [5. Production Workflow Presets](#5-production-workflow-presets)
-  - [6. Email Structuring & Sanitization](#6-email-structuring--sanitization)
-- [Inherited Checkpoint Limitations](#-inherited-checkpoint-limitations)
-- [Security Architecture & Audit](#-security-architecture--audit)
-- [Project Documentation Site](#-project-documentation-site)
-- [Contributing & Attribution](#-contributing--attribution)
+## Installation
 
----
-
-## 💡 The Ideation & Problem Space
-
-### Why Typed Decision Models?
-Modern agentic workflows and automated pipelines often rely on generative Large Language Models (LLMs) to perform simple routing, safety gating, intent triage, and validation. This is fundamentally inefficient:
-* **Latency:** Generative autoregressive decoding takes **300ms to 2,500ms** per decision.
-* **Cost & Bloat:** Calling cloud LLM endpoints introduces network latency, privacy concerns, API bills, and rate limits.
-* **Non-Determinism:** LLMs require extensive regex or grammar parsers to extract structured choices reliably.
-
-**Laya typed decision models** replace generative token loops with single-pass bidirectional classification (7–15ms) across formal decision types:
-* `choice`: Categorical routing with normalized probability distribution.
-* `score`: Ordinal multi-level ranking with calibrated expectation values.
-* `noul`: Calibrated epistemological confidence on binary propositions (grounded in evidence, not sycophancy).
-
-### The Platform Gap
-1. **Upstream Laya ([`NandhaKishorM/laya`](https://github.com/NandhaKishorM/laya)):** Fully featured and portable, but requires a heavy **PyTorch stack (~2 GB)**, resulting in slow container cold-starts and excessive memory overhead.
-2. **Apple MLX Port ([`mizorewww/laya-mlx`](https://github.com/mizorewww/laya-mlx)):** Blazing fast (7–14ms) on Apple Silicon, but **strictly locked to macOS ARM64**. Windows and Linux developers are unable to run it.
-
-### The Universal Solution: `laya-universal`
-`laya-universal` bridges the ecosystem gap:
-* **Universal Acceleration:** Auto-detects the hardware and runs via **ONNX Runtime** on Windows/Linux, with native **DirectML** support (accelerating **any** GPU: AMD, Intel, NVIDIA) and **CUDA** on Linux, plus native **MLX** on Apple Silicon.
-* **Ultralight Footprint:** Requires only NumPy, Rust Tokenizers, and ONNX Runtime (~50 MB vs. 2,000 MB).
-* **Format-Aware Backend Selection:** Inspects checkpoints on disk (`.onnx` vs. `.safetensors`) and chooses the optimal runnable engine automatically.
-* **Drop-in Compatibility:** Mirrors the exact public API, prompt formatting, temperature calibration, and routing logic of upstream Laya.
-
----
-
-## 🏗️ Architecture & Data Flow
-
-```
-                      ┌──────────────────────────────────────────────┐
-                      │    Input State (String / JSON) + Questions   │
-                      └──────────────────────┬───────────────────────┘
-                                             │
-                                             ▼
-                      ┌──────────────────────────────────────────────┐
-                      │         HuggingFace Rust Tokenizer           │
-                      │  ([CLS] ins [SEP] [MASK] opt0 ... [SEP] st)  │
-                      └──────────────────────┬───────────────────────┘
-                                             │
-                         ┌───────────────────┴───────────────────┐
-                         │                                       │
-                         ▼                                       ▼
-             ┌───────────────────────┐               ┌───────────────────────┐
-             │ PrefixCache (Optional)│               │  Collate & Pad Array  │
-             │   Bounded LRU Cache   │               │   (Dynamically Batched│
-             └───────────┬───────────┘               └───────────┬───────────┘
-                         │                                       │
-                         └───────────────────┬───────────────────┘
-                                             │
-                                             ▼
-                      ┌──────────────────────────────────────────────┐
-                      │    Format-Aware Backend Selector (Registry)  │
-                      └──────┬───────────────────────┬───────────────┘
-                             │                       │
-              Windows / Linux / macOS         Apple Silicon Only
-                             │                       │
-                             ▼                       ▼
-                  ┌──────────────────────┐┌──────────────────────┐
-                  │ ONNX Runtime Engine  ││  Native MLX Engine   │
-                  │ - DirectML (Windows) ││  - Metal Framework   │
-                  │ - CUDA (Linux)       ││  - model.safetensors │
-                  │ - CoreML / CPU       ││  - MX Array Streams  │
-                  └──────────┬───────────┘└──────────┬───────────┘
-                             │                       │
-                             └───────────┬───────────┘
-                                         │
-                                         ▼
-                      ┌──────────────────────────────────────────────┐
-                      │  Logits & Entropy Confidence Post-Processing │
-                      │  - Temperature Clamping ([0.5, 5.0])         │
-                      │  - Normalized Shannon Entropy Confidence     │
-                      └──────────────────────┬───────────────────────┘
-                                             │
-                                             ▼
-                      ┌──────────────────────────────────────────────┐
-                      │   Structured Typed Output: {answers, usage}  │
-                      └──────────────────────────────────────────────┘
-```
-
----
-
-## ⚡ Performance & Runtime Matrix
-
-| Platform | Recommended Backend | Hardware Acceleration | Typical Latency | Dependencies Required |
-|---|---|---|---|---|
-| **Windows 10/11** | `onnx-directml` | Any GPU (NVIDIA, AMD, Intel ARC/Iris) | **8–14 ms** | `onnxruntime-directml` |
-| **Linux (x86_64)** | `onnx-cuda` | NVIDIA GPU (Tensor Cores) | **6–11 ms** | `onnxruntime-gpu` |
-| **macOS (Apple Silicon)** | `mlx` | Apple Metal GPU (Unified Memory) | **7–13 ms** | `mlx` |
-| **macOS (Intel / ARM)** | `onnx-coreml` / `onnx-cpu` | Apple Neural Engine / CPU | **12–25 ms** | `onnxruntime` |
-| **Any Platform** | `onnx-cpu` | Vectorized CPU (AVX2 / AVX-512) | **18–35 ms** | `onnxruntime` |
-| *Upstream PyTorch* | *Torch / Cuda* | *NVIDIA only* | *15–40 ms* | *torch (~2,000 MB)* |
-
----
-
-## 📦 Installation Guide
-
-### Standard Installation (CPU Fallback, Cross-Platform)
-```bash
-pip install laya-universal
-```
-
-### Windows GPU Acceleration (DirectML - AMD, NVIDIA, Intel)
-```bash
-pip install onnxruntime-directml
-pip install laya-universal
-```
-
-### Linux GPU Acceleration (NVIDIA CUDA)
-```bash
-pip install onnxruntime-gpu
-pip install laya-universal
-```
-
-### Apple Silicon Acceleration (Metal MLX)
-```bash
-pip install "laya-universal[mlx]"
-```
-
-### One-Time ONNX Exporter Dependencies
-To convert upstream PyTorch checkpoints (`model.safetensors`) into `.onnx` directories:
-```bash
-pip install "laya-universal[export]"
-```
-
----
-
-## 🚀 Quick Start
-
-### Windows & Linux (DirectML / CUDA / CPU)
-
-The published Hugging Face checkpoints (`convaiinnovations/*`) ship `model.safetensors`. To run them with sub-15ms speeds on Windows or Linux, export an ONNX copy once:
+Clone the repository, then install exactly one inference runtime for the target environment:
 
 ```bash
-# 1. Export the model once (CPU PyTorch is fine for export)
-laya-universal convert --model convaiinnovations/laya --output ./laya-onnx
-
-# 2. Run inference anywhere with just ONNX Runtime!
+git clone https://github.com/abusuraihsakhri/laya-universal.git
+cd laya-universal
 ```
+
+### CPU / standard ONNX Runtime
+
+```bash
+python -m pip install ".[cpu]"
+```
+
+### NVIDIA CUDA
+
+```bash
+python -m pip install ".[gpu-cuda]"
+```
+
+### Windows DirectML
+
+```bash
+python -m pip install ".[gpu-directml]"
+```
+
+### Apple Silicon MLX
+
+```bash
+python -m pip install ".[mlx]"
+```
+
+ONNX Runtime publishes separate CPU, CUDA, and DirectML distributions that should not be installed together in one environment. The project therefore keeps them as mutually exclusive optional dependencies instead of installing the CPU runtime unconditionally.
+
+## Quick start
+
+For an ONNX checkpoint directory:
 
 ```python
 import laya_universal as laya
-
-# Load the exported model (automatically selects DirectML on Windows or CUDA on Linux)
-agent = laya.load("./laya-onnx")
-print(f"Active Backend: {agent.backend_name}")
-
-state = "Customer order #84920 was charged twice on invoice. Requesting urgent refund."
 
 questions = {
     "department": {
         "type": "choice",
-        "instructions": "Which department should handle this ticket?",
+        "instructions": "Which team should handle this request?",
         "criteria": {
-            "billing": "Invoices, double charges, refunds, payment errors",
-            "technical": "Software bugs, crashes, API errors",
-            "sales": "Upgrades, new licenses, contracts"
-        }
+            "billing": "invoices, charges, and refunds",
+            "technical": "bugs, outages, and integrations",
+            "sales": "pricing, plans, and purchases",
+        },
     },
-    "urgency": {
-        "type": "score",
-        "instructions": "Rate customer urgency.",
-        "criteria": ["low priority inquiry", "normal support issue", "critical financial/escalation block"]
-    },
-    "needs_refund": {
+    "urgent": {
         "type": "noul",
-        "instructions": "The customer is explicitly requesting a return of funds.",
-        "criteria": {
-            "false": "No refund requested",
-            "true": "Refund or billing adjustment requested"
-        }
-    }
-}
-
-result = agent.predict(state, questions)
-
-# Access typed answers:
-print("Department:", result["answers"]["department"]["choice"])
-print("Confidence:", result["answers"]["department"]["confidence"])
-print("Urgency Score (0-2):", result["answers"]["urgency"]["score"])
-print("Needs Refund (probability):", result["answers"]["needs_refund"]["noul"])
-```
-
-### Apple Silicon (Native MLX Metal)
-
-On Apple Silicon with macOS 13.5+ and Python 3.11+, checkpoints with `model.safetensors` run directly on Metal without conversion:
-
-```python
-import laya_universal as laya
-
-agent = laya.load("aac6fef/laya-mlx")
-result = agent.predict("I was billed twice.", questions)
-print(result["answers"]["department"]["choice"])
-```
-
-### Command-Line Interface (CLI)
-
-```bash
-# Inspect available backends and hardware providers on this machine:
-laya-universal info
-
-# Export a PyTorch model to ONNX:
-laya-universal convert --model convaiinnovations/laya --output ./laya-onnx
-
-# Run prediction directly from terminal:
-laya-universal predict --model ./laya-onnx --state "Card charged twice" --questions questions.json
-```
-
----
-
-## 🛠️ Comprehensive API Guide
-
-### 1. Typed Decisions (`choice`, `score`, `noul`)
-
-Laya enforces three distinct question schemas:
-
-```python
-questions = {
-    # 1. CHOICE: Categorical single-label selection
-    "intent": {
-        "type": "choice",
-        "instructions": "Identify the primary user intent.",
-        "criteria": ["dispute", "inquiry", "cancellation"] # Or dict with descriptions
+        "instructions": "Does the request communicate an urgent deadline?",
     },
-    # 2. SCORE: Calibrated expectation value across discrete levels (0 to K-1)
-    "sentiment": {
-        "type": "score",
-        "instructions": "Rate customer satisfaction level.",
-        "criteria": ["angry", "neutral", "delighted"]
-    },
-    # 3. NOUL: Epistemically calibrated binary probability (P(true))
-    "escalate": {
-        "type": "noul",
-        "instructions": "This ticket requires immediate human supervisor escalation."
-    }
 }
-```
-
-### 2. Sub-Millisecond Language & Task Routing
-
-The `Router` determines which checkpoint is appropriate based on language, character script, or task signature in **<0.5ms without loading any model weights**:
-
-```python
-from laya_universal import Router
-
-router = Router()
-
-# Route English text:
-decision = router.route("I need a billing refund")
-print(decision.model)  # -> 'english'
-
-# Route German or Chinese text:
-decision = router.route("Rechnung wurde doppelt belastet")
-print(decision.model)  # -> 'multilingual' (detected German Latin)
-
-decision = router.route("发票被重复扣款，请处理")
-print(decision.model)  # -> 'multilingual' (detected Han script)
-
-# Execute prediction with automatic routing:
-res = router.predict("发票被重复扣款", questions)
-print("Routed to:", res["routing"]["model"])
-```
-
-### 3. High-Cardinality Choice Shortlisting
-
-When dealing with large choice sets (e.g. 50–500 categories), Laya's maximum sequence length cannot fit all options. `predict_shortlist` performs an initial semantic pre-filter using the encoder's mean-pooled representation:
-
-```python
-from laya_universal import predict_shortlist, embed_fn_from_agent
 
 agent = laya.load("./laya-onnx")
-embed_fn = embed_fn_from_agent(agent)
+result = agent.predict("I was charged twice and need a refund.", questions)
 
-huge_criteria = {f"cat_{i}": f"Description for category {i}" for i in range(100)}
-
-questions = {
-    "category": {
-        "type": "choice",
-        "instructions": "Select the correct category.",
-        "criteria": huge_criteria
-    }
-}
-
-# Reduces 100 choices down to the top-k most semantically relevant before inference:
-result = predict_shortlist(agent, "My database connection timed out", questions, embed_fn=embed_fn, k=10)
-print(result["answers"]["category"]["choice"])
-print("Shortlist candidate count:", len(result["shortlist"]["category"]["labels"]))
+print(result["answers"]["department"])
+print(result["answers"]["urgent"])
 ```
 
-### 4. Tokenized Prefix Caching
+A checkpoint directory must contain the Laya configuration and tokenizer files plus a compatible weight file. ONNX backends look for `model.onnx`, `model_fp32.onnx`, or `laya.onnx`; MLX loads `model.safetensors`.
 
-For high-throughput servers executing the same question structures repeatedly over varying inputs, enable `cache_prompts=True`:
+Remote Hugging Face model IDs are supported. A safetensors-only checkpoint requires the MLX backend, or it must first be exported to ONNX on a machine with the upstream `laya` package and PyTorch installed.
 
-```python
-agent = laya.load("./laya-onnx", cache_prompts=True)
+## CLI
 
-# The question prefix tokens are cached in an LRU buffer; only state tokens are encoded per request.
-for user_message in incoming_stream:
-    result = agent.predict(user_message, questions)
+Inspect the backends visible in the current environment:
+
+```bash
+laya-universal info
 ```
 
-### 5. Production Workflow Presets
+Run a prediction from JSON questions:
 
-Laya ships built-in question dictionaries tuned for standard industry workflows:
-
-```python
-import laya_universal as laya
-
-# Pre-packaged decision workflows:
-triage = laya.triage_questions()        # intent, urgency, sentiment, escalation
-guards = laya.guard_questions()         # prompt injection, jailbreak, harmful content
-moderation = laya.moderation_questions()# toxic, hate, harassment, self-harm
-router = laya.router_questions()        # agent routing targets
-email = laya.email_questions()          # action required, sentiment, category
+```bash
+laya-universal predict \
+  --model ./laya-onnx \
+  --state "I was charged twice and need a refund." \
+  --questions questions.json
 ```
 
-### 6. Email Structuring & Sanitization
+Export an upstream checkpoint to ONNX:
 
-Clean noisy email bodies, stripping corporate disclaimer boilerplate, forwarded headers, and signatures before tokenization:
+```bash
+python -m pip install ".[export]"
+laya-universal convert --model convaiinnovations/laya --output ./laya-onnx
+```
+
+The exporter writes the decision graph and, when the upstream model exposes its encoder, `encoder.onnx` for embedding-based shortlisting.
+
+## Routing and presets
+
+`Router` can select among English, multilingual, and typed-decision checkpoints using explicit model/task/language settings or the built-in script/language heuristic.
 
 ```python
-from laya_universal import email_state
+router = laya.Router(auto_task_detection=True)
+decision = router.route("Bitte prüfen Sie diese Rechnung.", laya.triage_questions())
+print(decision)
+```
 
-state = email_state(
-    subject="Urgent: Invoice 4029 Incorrect",
-    body="""Hello team,
-    
-We were charged twice. Please review attached invoice.
+Built-in question dictionaries are available through:
 
-Best regards,
-Alice Smith
-Senior VP Operations
+- `triage_questions()`
+- `email_questions()`
+- `guard_questions()`
+- `moderation_questions()`
+- `router_questions()`
 
-CONFIDENTIALITY NOTICE: This transmission may contain confidential information...
-""",
-    sender="alice@example.com",
-    clean=True
+These are question templates, not guarantees of model accuracy. Validate checkpoint behavior on data representative of the intended task before relying on predictions.
+
+## Choice shortlisting
+
+For large categorical option sets, `predict_shortlist` can reduce the choices before the final decision pass. ONNX checkpoints can use `embed_fn_from_agent` when an `encoder.onnx` graph is present; callers may also provide a separate embedding function.
+
+```python
+from laya_universal import embed_fn_from_agent, predict_shortlist
+
+embed = embed_fn_from_agent(agent)
+result = predict_shortlist(
+    agent,
+    "Database connection timed out",
+    questions,
+    embed_fn=embed,
+    k=10,
 )
-
-result = agent.predict(state, laya.email_questions())
 ```
 
----
+Remote ONNX checkpoint downloads include `encoder.onnx` when that file exists in the repository.
 
-## ⚠️ Inherited Checkpoint Limitations
+## Data handling
 
-These traits stem directly from the underlying pretrained checkpoints and apply to all Laya runtimes:
+Inference runs in the local Python process. Loading a remote Hugging Face model ID can contact the Hugging Face Hub to list and download checkpoint files; loading an existing local checkpoint does not require that model download step. Application state passed to `predict` is processed locally by the selected backend.
 
-1. **Zero-Shot Base Performance:** Base Laya checkpoints (`convaiinnovations/laya`) achieve ~0.36 accuracy zero-shot on generalized tasks (near random chance ~0.32). The benchmark figure of **0.766** requires task-specific prompt structure or the fine-tuned `laya-typed-decisions` checkpoint. Treat Laya as a foundation to calibrate and align.
-2. **Boolean Option Bias:** `noul` questions can exhibit anchor bias toward option literals (`true:` / `false:`). Avoid defining boolean questions where labels invert meaning.
-3. **Action Probability:** `action.act_probability` reads ~1.0 on most checkpoints and carries minimal discriminating signal. **Always gate critical decisions on `confidence`**, which uses normalized Shannon entropy:
-   $$\text{Confidence} = 1 - \frac{H(p)}{\ln(k)}$$
-4. **Multilingual Score Position Bias:** The multilingual checkpoint rarely selects the first-listed level in ordinal `score` questions.
+No server-side component is provided by this repository. GitHub Pages hosts static documentation only.
 
----
+## Development
 
-## 🔒 Security Architecture & Audit
+```bash
+python -m pip install -e ".[cpu,dev]"
+python -m pip check
+python -m pip_audit
+python -m ruff check laya_universal tests
+python -m pytest -v
+python -m build
+```
 
-`laya-universal` has been rigorously evaluated and hardened against the **OWASP Top 10: 2025** threat model:
+CI runs linting, dependency consistency checks, dependency auditing, and the test suite on Windows and Ubuntu across Python 3.10, 3.11, and 3.12. It also verifies that the package builds successfully.
 
-* **Path Traversal Protection (CWE-22):** The model resolver rejects Windows backslash directory traversal (`..\..`), UNC network paths (`\\server\share`), drive letters, and escapes, guaranteeing that model loading stays bounded within approved directories.
-* **Safe Encoding (CWE-754):** All JSON, tokenizer, and checkpoint files are read with explicit UTF-8 decoding, preventing Windows ANSI (`cp1252`) denial-of-service crashes on international text.
-* **Thread-Safe Lazy Sessions (CWE-362):** Concurrent execution on multi-threaded web servers is protected by mutual exclusion locks during lazy ONNX session initialization.
-* **Isolated Provider Constraints (CWE-665):** Explicit `device="cpu"` flags cascade down to sub-graphs and encoder sessions, preventing unintended GPU allocations.
+## Browser compatibility
 
-Full details and verification proofs are documented in [**AUDIT.md**](AUDIT.md).
+The documentation site works as a static GitHub Pages site in modern browsers. The Python inference package itself is not currently a browser application. It depends on native Python inference runtimes and checkpoint assets, so this repository does not attempt to run the Python API through Pyodide or PyScript.
 
----
+For a browser-native inference implementation, ONNX Runtime Web would require a separate JavaScript/WebAssembly integration and model compatibility testing; that is outside the current package.
 
-## 🌐 Project Documentation Site
+## Security reporting
 
-An interactive documentation portal with architecture diagrams, real-time decision simulators, and platform selection tools is available in the [`docs/`](docs/) directory and hosted on GitHub Pages:
+See [SECURITY.md](SECURITY.md) for responsible vulnerability reporting. Do not include credentials, tokens, private model artifacts, or sensitive production data in public issues.
 
-👉 **[https://abusuraihsakhri.github.io/laya-universal/](https://abusuraihsakhri.github.io/laya-universal/)**
+## License and attribution
 
----
+Licensed under the [Apache License 2.0](LICENSE). See [NOTICE](NOTICE) for upstream attribution.
 
-## 📜 Contributing & Attribution
-
-Distributed under the **Apache-2.0 License**. See [LICENSE](LICENSE) and [NOTICE](NOTICE) for complete licensing terms.
-
-* Core Laya architecture and pretrained weights by **Convai Innovations** and upstream contributors ([`NandhaKishorM/laya`](https://github.com/NandhaKishorM/laya)).
-* MLX Metal port based on work by **[`mizorewww/laya-mlx`](https://github.com/mizorewww/laya-mlx)**.
-* `laya-universal` is an independent cross-platform engineering port maintained by **[abusuraihsakhri](https://github.com/abusuraihsakhri)**.
+The package derives portions of its prompt/runtime behavior from [NandhaKishorM/laya](https://github.com/NandhaKishorM/laya) and includes an MLX backend informed by [mizorewww/laya-mlx](https://github.com/mizorewww/laya-mlx).
