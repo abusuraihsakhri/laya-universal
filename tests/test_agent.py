@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 import laya_universal as laya
-from laya_universal.agent import Agent, resolve_model
+from laya_universal.agent import Agent, _download_patterns, resolve_model
 from laya_universal.backends import ModelHandle, register_backend
 from laya_universal.common import confidence_from_probs
 
@@ -213,6 +213,32 @@ def test_all_presets_are_valid_questions():
     ):
         for q in preset.values():
             Agent._to_internal(q)
+
+
+def test_download_patterns_include_remote_encoder_graph():
+    files = [
+        "model.onnx",
+        "encoder.onnx",
+        "rl_agent_config.json",
+        "encoder/config.json",
+        "tokenizer/tokenizer.json",
+    ]
+    patterns = _download_patterns(files, None)
+    assert "model.onnx" in patterns
+    assert "encoder.onnx" in patterns
+
+
+def test_download_patterns_include_subfolder_encoder_graph():
+    files = [
+        "typed/model.onnx",
+        "typed/encoder.onnx",
+        "typed/rl_agent_config.json",
+        "typed/encoder/config.json",
+        "typed/tokenizer/tokenizer.json",
+    ]
+    patterns = _download_patterns(files, "typed")
+    assert "typed/model.onnx" in patterns
+    assert "typed/encoder.onnx" in patterns
 
 
 def test_resolve_model_rejects_missing_local_paths():
